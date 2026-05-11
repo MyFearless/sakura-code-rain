@@ -3,28 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>樱花代码雨 | 抖音顶配版</title>
+    <title>花瓣飘落特效</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            overflow: hidden;
         }
         body {
-            background: #000;
-            width: 100vw;
-            height: 100vh;
+            overflow: hidden;
+            background: #0d0d0d;
+            font-family: 'Microsoft YaHei', sans-serif;
         }
-        #codeCanvas {
+        canvas {
+            display: block;
             position: fixed;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
             z-index: 1;
         }
-        #sakuraCanvas {
+        .overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -32,98 +30,295 @@
             height: 100%;
             z-index: 2;
             pointer-events: none;
+            background: radial-gradient(ellipse at center, transparent 0%, rgba(0,0,0,0.3) 100%);
+        }
+        .title {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3;
+            color: rgba(255, 192, 203, 0.7);
+            font-size: 18px;
+            letter-spacing: 8px;
+            text-shadow: 0 0 20px rgba(255, 105, 180, 0.5);
+            pointer-events: none;
         }
     </style>
 </head>
 <body>
-    <canvas id="codeCanvas"></canvas>
-    <canvas id="sakuraCanvas"></canvas>
+    <canvas id="petalCanvas"></canvas>
+    <div class="overlay"></div>
+    <div class="title">花瓣飘落</div>
 
     <script>
-        // 粉色代码雨（更细、更密、垂坠感更强，对标抖音）
-        const codeCanvas = document.getElementById('codeCanvas');
-        const codeCtx = codeCanvas.getContext('2d');
-        codeCanvas.width = window.innerWidth;
-        codeCanvas.height = window.innerHeight;
+        const canvas = document.getElementById('petalCanvas');
+        const ctx = canvas.getContext('2d');
 
-        const codeStr = "01<>/{}()[];:+-=*&%$#@ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-        const fontSize = 12;
-        const col = codeCanvas.width / fontSize;
-        const drops = [];
-        for(let i=0; i<col; i++) drops[i] = Math.random()*(-200);
+        let width, height;
+        let petals = [];
+        let lightStreaks = [];
 
-        function drawCodeRain(){
-            codeCtx.fillStyle = 'rgba(0,0,0,0.04)';
-            codeCtx.fillRect(0,0,codeCanvas.width,codeCanvas.height);
-            codeCtx.fillStyle = '#ff3366';
-            codeCtx.font = fontSize+'px monospace';
-            for(let i=0; i<drops.length; i++){
-                const text = codeStr[Math.floor(Math.random()*codeStr.length)];
-                codeCtx.fillText(text, i*fontSize, drops[i]*fontSize);
-                if(drops[i]*fontSize>codeCanvas.height && Math.random()>0.98) drops[i]=Math.random()*-200;
-                drops[i] += 1.2;
+        // 花瓣颜色配置
+        const petalColors = [
+            { r: 255, g: 182, b: 193, a: 0.9 },   // 浅粉
+            { r: 255, g: 160, b: 180, a: 0.85 },  // 粉红
+            { r: 255, g: 192, b: 203, a: 0.8 },   // 粉红
+            { r: 255, g: 105, b: 180, a: 0.7 },   // 热粉
+            { r: 255, g: 228, b: 225, a: 0.85 },  // 玫瑰白
+            { r: 255, g: 240, b: 245, a: 0.75 },  // 薰衣草粉
+        ];
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // 光柱/光线类
+        class LightStreak {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * width;
+                this.y = -Math.random() * 200;
+                this.length = 80 + Math.random() * 200;
+                this.speed = 2 + Math.random() * 4;
+                this.width = 0.5 + Math.random() * 1.5;
+                this.opacity = 0.1 + Math.random() * 0.3;
+                this.wobble = Math.random() * Math.PI * 2;
+                this.wobbleSpeed = 0.01 + Math.random() * 0.02;
+            }
+
+            update() {
+                this.y += this.speed;
+                this.wobble += this.wobbleSpeed;
+                this.x += Math.sin(this.wobble) * 0.5;
+
+                if (this.y > height + this.length) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                const gradient = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.length);
+                gradient.addColorStop(0, `rgba(255, 182, 193, 0)`);
+                gradient.addColorStop(0.3, `rgba(255, 182, 193, ${this.opacity})`);
+                gradient.addColorStop(0.7, `rgba(255, 160, 180, ${this.opacity * 0.5})`);
+                gradient.addColorStop(1, `rgba(255, 182, 193, 0)`);
+
+                ctx.beginPath();
+                ctx.moveTo(this.x, this.y);
+                ctx.lineTo(this.x, this.y + this.length);
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = this.width;
+                ctx.stroke();
             }
         }
-        setInterval(drawCodeRain,25);
 
-        // 超真实樱花飘落（大小、旋转、飘落轨迹、密度对标抖音）
-        const sakuraCanvas = document.getElementById('sakuraCanvas');
-        const sakuraCtx = sakuraCanvas.getContext('2d');
-        sakuraCanvas.width = window.innerWidth;
-        sakuraCanvas.height = window.innerHeight;
-
-        class Sakura{
-            constructor(){
-                this.x = Math.random()*sakuraCanvas.width;
-                this.y = -30;
-                this.r = Math.random()*7+3;
-                this.speedY = Math.random()*1.2+0.6;
-                this.speedX = Math.random()*0.8-0.4;
-                this.rotate = Math.random()*Math.PI*2;
-                this.rotateSpeed = Math.random()*0.03-0.015;
-                this.opacity = Math.random()*0.4+0.6;
+        // 花瓣类
+        class Petal {
+            constructor() {
+                this.reset(true);
             }
-            update(){
+
+            reset(initial = false) {
+                this.x = Math.random() * width;
+                this.y = initial ? Math.random() * height : -30 - Math.random() * 50;
+                this.size = 6 + Math.random() * 14;
+                this.speedY = 1 + Math.random() * 2.5;
+                this.speedX = (Math.random() - 0.5) * 1.5;
+                this.rotation = Math.random() * Math.PI * 2;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.04;
+                this.sway = Math.random() * Math.PI * 2;
+                this.swaySpeed = 0.01 + Math.random() * 0.025;
+                this.swayAmplitude = 0.5 + Math.random() * 2;
+
+                const color = petalColors[Math.floor(Math.random() * petalColors.length)];
+                this.color = { ...color };
+                this.opacity = color.a;
+
+                // 花瓣形状参数
+                this.ovalRatio = 0.6 + Math.random() * 0.4; // 椭圆比例
+                this.petalType = Math.floor(Math.random() * 3); // 0: 椭圆, 1: 心形, 2: 不规则
+            }
+
+            update() {
                 this.y += this.speedY;
-                this.x += this.speedX;
-                this.rotate += this.rotateSpeed;
+                this.sway += this.swaySpeed;
+                this.x += this.speedX + Math.sin(this.sway) * this.swayAmplitude;
+                this.rotation += this.rotationSpeed;
+
+                // 边缘淡出
+                if (this.y > height - 100) {
+                    this.opacity = Math.max(0, this.color.a * (1 - (this.y - (height - 100)) / 100));
+                }
+
+                if (this.y > height + 30 || this.x < -50 || this.x > width + 50) {
+                    this.reset();
+                }
             }
-            draw(){
-                sakuraCtx.save();
-                sakuraCtx.globalAlpha = this.opacity;
-                sakuraCtx.translate(this.x,this.y);
-                sakuraCtx.rotate(this.rotate);
-                sakuraCtx.beginPath();
-                sakuraCtx.fillStyle = '#ffd8e0';
-                sakuraCtx.ellipse(0,0,this.r,this.r*0.55,0,0,Math.PI*2);
-                sakuraCtx.fill();
-                sakuraCtx.restore();
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation);
+                ctx.globalAlpha = this.opacity;
+
+                const r = this.color.r;
+                const g = this.color.g;
+                const b = this.color.b;
+
+                if (this.petalType === 0) {
+                    // 椭圆花瓣
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, this.size, this.size * this.ovalRatio, 0, 0, Math.PI * 2);
+                    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, this.size);
+                    gradient.addColorStop(0, `rgba(255, 240, 245, 0.9)`);
+                    gradient.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, 0.8)`);
+                    gradient.addColorStop(1, `rgba(${r * 0.8}, ${g * 0.8}, ${b * 0.9}, 0.6)`);
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+
+                    // 花瓣纹理线
+                    ctx.beginPath();
+                    ctx.moveTo(0, -this.size * this.ovalRatio * 0.8);
+                    ctx.lineTo(0, this.size * this.ovalRatio * 0.8);
+                    ctx.strokeStyle = `rgba(${r * 0.7}, ${g * 0.7}, ${b * 0.7}, 0.3)`;
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                } else if (this.petalType === 1) {
+                    // 心形花瓣
+                    ctx.beginPath();
+                    const s = this.size * 0.6;
+                    ctx.moveTo(0, s * 0.3);
+                    ctx.bezierCurveTo(-s, -s * 0.5, -s, -s * 1.2, 0, -s * 0.8);
+                    ctx.bezierCurveTo(s, -s * 1.2, s, -s * 0.5, 0, s * 0.3);
+                    const gradient = ctx.createRadialGradient(0, -s * 0.3, 0, 0, -s * 0.3, s);
+                    gradient.addColorStop(0, `rgba(255, 240, 245, 0.9)`);
+                    gradient.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0.8)`);
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+                } else {
+                    // 不规则花瓣（类似樱花瓣）
+                    ctx.beginPath();
+                    const s = this.size;
+                    ctx.moveTo(0, -s);
+                    ctx.bezierCurveTo(s * 0.5, -s * 0.8, s * 0.8, -s * 0.3, s * 0.3, s * 0.2);
+                    ctx.bezierCurveTo(s * 0.1, s * 0.5, -s * 0.1, s * 0.5, -s * 0.3, s * 0.2);
+                    ctx.bezierCurveTo(-s * 0.8, -s * 0.3, -s * 0.5, -s * 0.8, 0, -s);
+                    const gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, s);
+                    gradient.addColorStop(0, `rgba(255, 240, 245, 0.9)`);
+                    gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, 0.85)`);
+                    gradient.addColorStop(1, `rgba(${r * 0.85}, ${g * 0.85}, ${b * 0.9}, 0.7)`);
+                    ctx.fillStyle = gradient;
+                    ctx.fill();
+
+                    // 缺口效果
+                    ctx.beginPath();
+                    ctx.arc(s * 0.15, -s * 0.3, s * 0.15, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(13, 13, 13, 0.3)`;
+                    ctx.fill();
+                }
+
+                // 发光效果
+                ctx.shadowColor = `rgba(${r}, ${g}, ${b}, 0.5)`;
+                ctx.shadowBlur = 8;
+
+                ctx.restore();
             }
         }
 
-        const sakuraList = [];
-        function createSakura(){
-            sakuraList.push(new Sakura());
-        }
-        setInterval(createSakura,60);
-
-        function animateSakura(){
-            sakuraCtx.clearRect(0,0,sakuraCanvas.width,sakuraCanvas.height);
-            for(let i=0; i<sakuraList.length; i++){
-                sakuraList[i].update();
-                sakuraList[i].draw();
-                if(sakuraList[i].y>sakuraCanvas.height) sakuraList.splice(i,1);
+        // 闪烁的小光点
+        class Sparkle {
+            constructor() {
+                this.reset(true);
             }
-            requestAnimationFrame(animateSakura);
-        }
-        animateSakura();
 
-        window.addEventListener('resize',()=>{
-            codeCanvas.width = window.innerWidth;
-            codeCanvas.height = window.innerHeight;
-            sakuraCanvas.width = window.innerWidth;
-            sakuraCanvas.height = window.innerHeight;
-        })
+            reset(initial = false) {
+                this.x = Math.random() * width;
+                this.y = initial ? Math.random() * height : Math.random() * height * 0.5;
+                this.size = 0.5 + Math.random() * 2;
+                this.opacity = Math.random() * 0.8;
+                this.fadeSpeed = 0.005 + Math.random() * 0.015;
+                this.fadeDir = Math.random() > 0.5 ? 1 : -1;
+                this.speedY = 0.3 + Math.random() * 1;
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.opacity += this.fadeSpeed * this.fadeDir;
+
+                if (this.opacity >= 0.9 || this.opacity <= 0.1) {
+                    this.fadeDir *= -1;
+                }
+
+                if (this.y > height) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.opacity;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 220, 230, ${this.opacity})`;
+                ctx.shadowColor = 'rgba(255, 182, 193, 0.8)';
+                ctx.shadowBlur = 6;
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        // 初始化
+        function init() {
+            // 花瓣
+            for (let i = 0; i < 120; i++) {
+                petals.push(new Petal());
+            }
+            // 光柱
+            for (let i = 0; i < 30; i++) {
+                lightStreaks.push(new LightStreak());
+            }
+            // 闪烁光点
+            for (let i = 0; i < 80; i++) {
+                sparkles.push(new Sparkle());
+            }
+        }
+
+        let sparkles = [];
+
+        // 动画循环
+        function animate() {
+            ctx.clearRect(0, 0, width, height);
+
+            // 绘制光柱（在最底层）
+            lightStreaks.forEach(streak => {
+                streak.update();
+                streak.draw();
+            });
+
+            // 绘制闪烁光点
+            sparkles.forEach(sparkle => {
+                sparkle.update();
+                sparkle.draw();
+            });
+
+            // 绘制花瓣
+            petals.forEach(petal => {
+                petal.update();
+                petal.draw();
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        init();
+        animate();
     </script>
 </body>
 </html>
