@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>樱花代码雨｜抖音原版复刻</title>
+    <title>樱花代码雨｜抖音原版渐变复刻</title>
     <style>
         * {
             margin: 0;
@@ -12,9 +12,10 @@
             overflow: hidden;
         }
         body {
-            background: #000000;
             width: 100vw;
             height: 100vh;
+            /* 核心：顶部粉红渐变向下过渡黑色，完全匹配你截图效果 */
+            background: linear-gradient(to bottom, #580020 0%, #200010 30%, #000000 60%);
         }
         /* 底层代码雨 */
         #codeCanvas {
@@ -42,41 +43,38 @@
     <canvas id="sakuraCanvas"></canvas>
 
     <script>
-        // ========== 1. 垂直细线条代码雨（和抖音完全一致） ==========
+        // ========== 1. 细长连续垂坠代码雨（抖音原版长线效果） ==========
         const codeCanvas = document.getElementById('codeCanvas');
         const codeCtx = codeCanvas.getContext('2d');
         codeCanvas.width = window.innerWidth;
         codeCanvas.height = window.innerHeight;
 
-        // 字符集和抖音完全匹配
         const codeStr = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ<>/{}()[];:+-=*&%$#@";
-        const fontSize = 11;
+        const fontSize = 10;
         const col = codeCanvas.width / fontSize;
         const drops = [];
-        // 初始随机顶部下落
         for (let i = 0; i < col; i++) drops[i] = Math.random() * -codeCanvas.height;
 
         function drawCodeRain() {
-            // 拖尾效果，做出垂坠长线
-            codeCtx.fillStyle = 'rgba(0, 0, 0, 0.06)';
+            // 超长拖尾，实现垂坠细线
+            codeCtx.fillStyle = 'rgba(0, 0, 0, 0.045)';
             codeCtx.fillRect(0, 0, codeCanvas.width, codeCanvas.height);
-            // 深粉色，和抖音色调一致
-            codeCtx.fillStyle = '#ff2a5a';
+            // 适配顶部渐变，上方代码偏亮粉、下方暗粉
+            codeCtx.fillStyle = '#ff4070';
             codeCtx.font = `${fontSize}px monospace`;
 
             for (let i = 0; i < drops.length; i++) {
                 const text = codeStr[Math.floor(Math.random() * codeStr.length)];
                 codeCtx.fillText(text, i * fontSize, drops[i] * fontSize);
-                // 循环下落
-                if (drops[i] * fontSize > codeCanvas.height && Math.random() > 0.985) {
+                if (drops[i] * fontSize > codeCanvas.height && Math.random() > 0.988) {
                     drops[i] = Math.random() * -codeCanvas.height;
                 }
-                drops[i] += 1.4;
+                drops[i] += 1.5;
             }
         }
-        setInterval(drawCodeRain, 22);
+        setInterval(drawCodeRain, 20);
 
-        // ========== 2. 大片樱花+细碎星光（1:1复刻原图） ==========
+        // ========== 2. 分层樱花+星光，匹配原图疏密 ==========
         const sakuraCanvas = document.getElementById('sakuraCanvas');
         const sakuraCtx = sakuraCanvas.getContext('2d');
         sakuraCanvas.width = window.innerWidth;
@@ -85,16 +83,14 @@
         class Sakura {
             constructor() {
                 this.x = Math.random() * sakuraCanvas.width;
-                this.y = -40;
-                // 花瓣大小分层，和原图一致
-                this.r = Math.random() * 9 + 4;
-                this.speedY = Math.random() * 1.4 + 0.7;
-                this.speedX = Math.random() * 0.9 - 0.45;
+                this.y = Math.random() * -80;
+                this.r = Math.random() * 10 + 3;
+                this.speedY = Math.random() * 1.5 + 0.8;
+                this.speedX = Math.random() * 1 - 0.5;
                 this.rotate = Math.random() * Math.PI * 2;
-                this.rotateSpeed = Math.random() * 0.035 - 0.018;
-                this.opacity = Math.random() * 0.35 + 0.65;
-                // 区分花瓣/星光小点
-                this.isStar = Math.random() > 0.85;
+                this.rotateSpeed = Math.random() * 0.04 - 0.02;
+                this.opacity = Math.random() * 0.4 + 0.6;
+                this.isStar = Math.random() > 0.82; // 星光小点
             }
             update() {
                 this.y += this.speedY;
@@ -108,16 +104,14 @@
                 sakuraCtx.rotate(this.rotate);
 
                 if (this.isStar) {
-                    // 细碎星光小点
-                    sakuraCtx.fillStyle = '#ffd6dd';
+                    sakuraCtx.fillStyle = '#ffd8e0';
                     sakuraCtx.beginPath();
-                    sakuraCtx.arc(0, 0, this.r * 0.25, 0, Math.PI * 2);
+                    sakuraCtx.arc(0, 0, this.r * 0.22, 0, Math.PI * 2);
                     sakuraCtx.fill();
                 } else {
-                    // 椭圆花瓣，柔和真实
-                    sakuraCtx.fillStyle = '#ffdde3';
+                    sakuraCtx.fillStyle = '#ffdde4';
                     sakuraCtx.beginPath();
-                    sakuraCtx.ellipse(0, 0, this.r, this.r * 0.52, 0, 0, Math.PI * 2);
+                    sakuraCtx.ellipse(0, 0, this.r, this.r * 0.5, 0, 0, Math.PI * 2);
                     sakuraCtx.fill();
                 }
                 sakuraCtx.restore();
@@ -125,11 +119,10 @@
         }
 
         const sakuraList = [];
-        // 密度拉高，和原图花瓣量一致
         function createSakura() {
             sakuraList.push(new Sakura());
         }
-        setInterval(createSakura, 45);
+        setInterval(createSakura, 40);
 
         function animateSakura() {
             sakuraCtx.clearRect(0, 0, sakuraCanvas.width, sakuraCanvas.height);
