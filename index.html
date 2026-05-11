@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>樱花代码雨 | Sakura Code Rain</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        body {
+            background: #000;
+            width: 100vw;
+            height: 100vh;
+        }
+        /* 代码雨画布 */
+        #codeCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+        /* 樱花画布 */
+        #sakuraCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- 代码雨 -->
+    <canvas id="codeCanvas"></canvas>
+    <!-- 樱花飘落 -->
+    <canvas id="sakuraCanvas"></canvas>
+
+    <script>
+        // ========== 1. 代码雨效果 ==========
+        const codeCanvas = document.getElementById('codeCanvas');
+        const codeCtx = codeCanvas.getContext('2d');
+        codeCanvas.width = window.innerWidth;
+        codeCanvas.height = window.innerHeight;
+
+        const codeStr = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ<>/{}()[];:.+-=*&%$#@";
+        const fontSize = 14;
+        const col = codeCanvas.width / fontSize;
+        const drops = [];
+        for(let i=0; i<col; i++) drops[i] = 1;
+
+        function drawCodeRain(){
+            codeCtx.fillStyle = 'rgba(0,0,0,0.05)';
+            codeCtx.fillRect(0,0,codeCanvas.width,codeCanvas.height);
+            codeCtx.fillStyle = '#ff4477';
+            codeCtx.font = fontSize+'px monospace';
+            for(let i=0; i<drops.length; i++){
+                const text = codeStr[Math.floor(Math.random()*codeStr.length)];
+                codeCtx.fillText(text, i*fontSize, drops[i]*fontSize);
+                if(drops[i]*fontSize>codeCanvas.height && Math.random()>0.975) drops[i]=0;
+                drops[i]++;
+            }
+        }
+        setInterval(drawCodeRain,35);
+
+        // ========== 2. 樱花飘落效果 ==========
+        const sakuraCanvas = document.getElementById('sakuraCanvas');
+        const sakuraCtx = sakuraCanvas.getContext('2d');
+        sakuraCanvas.width = window.innerWidth;
+        sakuraCanvas.height = window.innerHeight;
+
+        class Sakura{
+            constructor(){
+                this.x = Math.random()*sakuraCanvas.width;
+                this.y = -50;
+                this.r = Math.random()*8+4;
+                this.speedY = Math.random()*1.5+0.8;
+                this.speedX = Math.random()*0.6-0.3;
+                this.rotate = Math.random()*Math.PI*2;
+                this.rotateSpeed = Math.random()*0.02-0.01;
+            }
+            update(){
+                this.y += this.speedY;
+                this.x += this.speedX;
+                this.rotate += this.rotateSpeed;
+            }
+            draw(){
+                sakuraCtx.save();
+                sakuraCtx.translate(this.x,this.y);
+                sakuraCtx.rotate(this.rotate);
+                sakuraCtx.beginPath();
+                sakuraCtx.fillStyle = '#ffd0d9';
+                sakuraCtx.ellipse(0,0,this.r,this.r*0.6,0,0,Math.PI*2);
+                sakuraCtx.fill();
+                sakuraCtx.restore();
+            }
+        }
+
+        const sakuraList = [];
+        function createSakura(){
+            sakuraList.push(new Sakura());
+        }
+        setInterval(createSakura,120);
+
+        function animateSakura(){
+            sakuraCtx.clearRect(0,0,sakuraCanvas.width,sakuraCanvas.height);
+            for(let i=0; i<sakuraList.length; i++){
+                sakuraList[i].update();
+                sakuraList[i].draw();
+                if(sakuraList[i].y>sakuraCanvas.height) sakuraList.splice(i,1);
+            }
+            requestAnimationFrame(animateSakura);
+        }
+        animateSakura();
+
+        // 窗口自适应
+        window.addEventListener('resize',()=>{
+            codeCanvas.width = window.innerWidth;
+            codeCanvas.height = window.innerHeight;
+            sakuraCanvas.width = window.innerWidth;
+            sakuraCanvas.height = window.innerHeight;
+        })
+    </script>
+</body>
+</html>
